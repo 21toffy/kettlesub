@@ -33,6 +33,7 @@ class LoginView(TokenObtainPairView):
     serializer_class = TokenObtainPairSerializer
 
     def post(self, request, **kwargs):
+        print("LoginView - POST method called")
         serializer = LoginSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
@@ -44,6 +45,8 @@ class LoginView(TokenObtainPairView):
             tokens = super().post(request)
             data = {"email": user.email, "fullname": user.fullname}
 
+            print("Login successful")
+
             return custom_response(
                 data=data,
                 message="Logged in successfully",
@@ -52,6 +55,7 @@ class LoginView(TokenObtainPairView):
                 tokens=tokens.data
             )
         else:
+            print("Invalid credentials")
             return custom_response(
                 data="Invalid credentials",
                 message="Invalid credentials",
@@ -78,10 +82,12 @@ class RefreshTokenView(TokenRefreshView):
     serializer_class = TokenRefreshSerializer
 
     def post(self, request, **kwargs):
+        print("RefreshTokenView -POST method called")
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
         access_token = validated_data.get('access')
+        print("Token refreshed successfully")
         return custom_response({
             "message": "Refreshed successfully",
             "token": access_token}, status.HTTP_200_OK, "success")
@@ -105,11 +111,13 @@ class Logout(TokenBlacklistView):
     serializer_class = TokenBlacklistSerializer
 
     def post(self, request, *args, **kwargs):
-
+        print(self, request, *args, **kwargs)
         serializer = self.serializer_class(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
+            print("Logged out successfully")
             return custom_response("Logged out successfully.", status.HTTP_200_OK, "success")
         except TokenError:
+            print("Token is blacklisted")
             return custom_response("Token is blacklisted.", status.HTTP_400_BAD_REQUEST, "failed")
 

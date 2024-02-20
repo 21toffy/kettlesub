@@ -27,6 +27,7 @@ class RegistrationView(APIView):
     serializer_class = RegisterSerializer
 
     def post(self, request):
+        print("RegistrationView - POST method called")
         serializer = self.serializer_class(data=request)
         serializer.is_valid(raise_exception=True)
 
@@ -41,9 +42,11 @@ class RegistrationView(APIView):
             otp_code = generate_otp(user)
             send_otp_email(user, otp_code)
 
+            print("User created successfully")
             return custom_response({"message": "User created successfully"},
                                    status.HTTP_201_CREATED, "success")
         except IntegrityError:
+            print("An error occurred during user creation")
             return custom_response({"message": "An error occurred during user creation"},
                                    status.HTTP_500_INTERNAL_SERVER_ERROR, 'failed')
 
@@ -68,6 +71,7 @@ class VerificationView(APIView):
     serializer_class = OTPVerificationSerializer
 
     def post(self, request):
+        print("VerificationView - POST method called")
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -79,6 +83,9 @@ class VerificationView(APIView):
             user = User.objects.get(email=validated_data['email'])
             user.is_active = True
             user.save()
+            print("OTP verified successfully")
+        else:
+            print("OTP verification failed")
 
     @staticmethod
     def verify_otp(email, otp_code):
