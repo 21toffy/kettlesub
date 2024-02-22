@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 from datetime import timedelta
 from pathlib import Path
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,6 +40,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'Common.apps.CommonConfig',
     'Auth',
+    'Transactions',
+    'Wallet',
 
     #third party
     'rest_framework_simplejwt',
@@ -71,7 +74,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
-AUTH_USER_MODEL = 'user.User'
+AUTH_USER_MODEL = 'Auth.User'
 
 ROOT_URLCONF = 'KettleSub.urls'
 
@@ -154,3 +157,11 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #EMAIL_USE_TLS = True
 #EMAIL_HOST_USER = 'your_gmail_username@gmail.com'
 #EMAIL_HOST_PASSWORD = 'your_gmail_password'
+
+
+BAXI_BASE_URL = config("BAXI_BASE_URL_TEST")
+BAXI_BASE_URL_2 = config("BAXI_BASE_URL_2")
+BAXI_AGENT_ID = config("BAXI_AGENT_ID")
+BAXI_BAP_ACCESS_KEY = config("BAXI_BAP_ACCESS_KEY")
+BAXI_KEY = config("BAXI_KEY")
+BAXI_MOCK = config("BAXI_MOCK")
