@@ -2,11 +2,12 @@ from rest_framework.response import Response
 from rest_framework import status
 
 
-def custom_response(data, message, status_code, status_text=None, tokens=None):
+def custom_response(data, message, status_code, status_text=None, tokens=None, status_body="success"):
     status_code = int(status_code)
 
     response_data = {
         "status_code": status_code,
+        "status_body": status_body,
         "message": message,
         "data": data,
     }

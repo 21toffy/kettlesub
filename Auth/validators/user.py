@@ -1,11 +1,13 @@
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
 
+
 def validate_email_format(value):
     try:
         validate_email(value)
     except ValidationError:
         raise ValidationError("Invalid email format")
+
 
 def validate_phone_number(value):
     if not value.startswith('+'):

@@ -43,9 +43,9 @@ class User(BaseModel, AbstractBaseUser):
     first_name = models.CharField(max_length=255, null=True)
     middle_name = models.CharField(max_length=255, null=True)
     last_name = models.CharField(max_length=255, null=True)
+    pin = models.CharField(max_length=4, null=True, blank=True)
     username = models.CharField(max_length=255, null=True)
     referal_code = models.CharField(max_length=255, null=True)
-    username = models.CharField(max_length=255, null=True)
     is_admin = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     ussd_pin = models.CharField(
