@@ -1,7 +1,7 @@
 from Common.custom_response import custom_response
 from rest_framework.views import APIView
 from rest_framework import status
-from Auth.utils.user import generate_otp, send_otp_email
+from Auth.utils.user import *
 from django.db import IntegrityError
 from Auth.serializers import RegisterSerializer, OTPVerificationSerializer, OTPSerializer
 from Auth.models import User
@@ -42,11 +42,11 @@ class RegistrationView(APIView):
             otp_code = generate_otp(user)
             send_otp_email(user, otp_code)
 
-            print("User created successfully")
+            print(f"Generated OTP for user {user.email}: {otp_code}")
+
             return custom_response({"message": "User created successfully"},
                                    status.HTTP_201_CREATED, "success")
         except IntegrityError:
-            print("An error occurred during user creation")
             return custom_response({"message": "An error occurred during user creation"},
                                    status.HTTP_500_INTERNAL_SERVER_ERROR, 'failed')
 
@@ -71,7 +71,6 @@ class VerificationView(APIView):
     serializer_class = OTPVerificationSerializer
 
     def post(self, request):
-        print("VerificationView - POST method called")
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
@@ -83,9 +82,11 @@ class VerificationView(APIView):
             user = User.objects.get(email=validated_data['email'])
             user.is_active = True
             user.save()
-            print("OTP verified successfully")
+            return custom_response({"message": "OTP verification successful"},
+                                   status.HTTP_200_OK, 'success')
         else:
-            print("OTP verification failed")
+            return custom_response({"message": "Invalid OTP code"},
+                                   status.HTTP_400_BAD_REQUEST, 'failed')
 
     @staticmethod
     def verify_otp(email, otp_code):

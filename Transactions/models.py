@@ -1,6 +1,6 @@
 from Auth.models import User
 from django.db import models
-from Wallet.models import WalletModel
+from Wallet.models.wallet import WalletModel
 from Common.models import BaseModel
 
 

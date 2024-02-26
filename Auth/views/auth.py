@@ -10,9 +10,13 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenBlacklistView
 )
+from django.contrib.auth.tokens import PasswordResetTokenGenerator
+from django.utils.encoding import smart_str, force_str, DjangoUnicodeDecodeError
 from rest_framework import status
+from rest_framework.views import APIView
 from Common.custom_response import custom_response
-from Auth.serializers.auth import LoginSerializer
+from Auth.serializers.auth import *
+from Auth.utils.user import send_reset_email
 
 
 class LoginView(TokenObtainPairView):
@@ -59,7 +63,7 @@ class LoginView(TokenObtainPairView):
             return custom_response(
                 data="Invalid credentials",
                 message="Invalid credentials",
-                status_code=status.HTTP_400_BAD_REQUEST,
+                status_code=status.HTTP_401_UNAUTHORIZED,
                 status_text="error"
             )
 
@@ -82,15 +86,17 @@ class RefreshTokenView(TokenRefreshView):
     serializer_class = TokenRefreshSerializer
 
     def post(self, request, **kwargs):
-        print("RefreshTokenView -POST method called")
         serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        validated_data = serializer.validated_data
-        access_token = validated_data.get('access')
-        print("Token refreshed successfully")
-        return custom_response({
-            "message": "Refreshed successfully",
-            "token": access_token}, status.HTTP_200_OK, "success")
+        try:
+            serializer.is_valid(raise_exception=True)
+            validated_data = serializer.validated_data
+            access_token = validated_data.get('access')
+            return custom_response({
+                "message": "Refreshed successfully",
+                "token": access_token
+            }, status.HTTP_200_OK, "success")
+        except TokenError:
+            return custom_response("Invalid or expired refresh token.", status.HTTP_401_UNAUTHORIZED, "failed")
 
 
 class Logout(TokenBlacklistView):
@@ -115,9 +121,92 @@ class Logout(TokenBlacklistView):
         serializer = self.serializer_class(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
-            print("Logged out successfully")
             return custom_response("Logged out successfully.", status.HTTP_200_OK, "success")
         except TokenError:
-            print("Token is blacklisted")
-            return custom_response("Token is blacklisted.", status.HTTP_400_BAD_REQUEST, "failed")
+            return custom_response("Token is blacklisted.", status.HTTP_401_UNAUTHORIZED, "failed")
+
+
+class ForgotPasswordView(APIView):
+    """
+    API endpoint for initiating the password reset process.
+
+    Handles POST requests for initiating password reset.
+
+    Args:
+        request: The HTTP request object.
+
+    Returns:
+        Response: JSON response indicating the status of the password reset process.
+    """
+    serializer_class = ForgotPasswordSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        email = serializer.validated_data['email']
+
+        user = User.objects.filter(email=email).first()
+        if user:
+            try:
+                reset_token = PasswordResetTokenGenerator().make_token(user)
+                reset_link = self._get_reset_link(request, user, reset_token)
+
+                print(f"Reset link generated: {reset_link}")
+
+                send_reset_email(email, reset_link)
+
+                return custom_response({'message': 'Password reset email sent successfully.'}, status.HTTP_200_OK, "success")
+            except Exception as e:
+                return custom_response({'message': 'Error sending reset email.', 'error': str(e)},status.HTTP_500_INTERNAL_SERVER_ERROR, "failed")
+        else:
+            return custom_response({'message': 'No user found with the provided email.'}, status.HTTP_404_NOT_FOUND, "failed")
+
+    def _get_reset_link(self, request, user, reset_token):
+        uidb64 = urlsafe_base64_encode(smart_str(user.id))
+        reset_link = request.build_absolute_uri(
+            f'/reset-password/{uidb64}/{reset_token}/'
+        )
+        return reset_link
+
+class ResetPasswordView(APIView):
+    """
+    API endpoint for resetting the user password.
+
+    Handles POST requests for resetting the password.
+
+    Args:
+        request: The HTTP request object.
+
+    Returns:
+        Response: JSON response indicating the status of the password reset process.
+    """
+    serializer_class = ResetPasswordSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        uidb64 = kwargs.get('uidb64')
+        token = kwargs.get('token')
+
+        user = self._get_user(uidb64)
+        if user and PasswordResetTokenGenerator().check_token(user, token):
+            try:
+                # Set the new password
+                user.set_password(serializer.validated_data['password'])
+                user.save()
+                return custom_response({'message': 'Password reset successful.'}, status.HTTP_200_OK,
+                                       status_text="success")
+            except Exception as e:
+                return custom_response({'message': 'Error resetting password.', 'error': str(e)},
+                                       status.HTTP_500_INTERNAL_SERVER_ERROR, status_text="failed")
+        else:
+            return custom_response({'message': 'Invalid reset link.'}, status.HTTP_400_BAD_REQUEST, status_text="failed")
+
+    def _get_user(self, uidb64):
+        try:
+            user_id = force_str(urlsafe_base64_decode(uidb64))
+            return User.objects.get(id=user_id)
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist, DjangoUnicodeDecodeError):
+            return None
 

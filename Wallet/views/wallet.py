@@ -1,11 +1,11 @@
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.permissions import IsAuthenticated
-from .serializers import *
+from Wallet.views.serializers import *
 from rest_framework import status
 from rest_framework.views import APIView
 from Common.custom_response import custom_response
 from django.db import transaction
-from Common.wallet_operation import debit_credit_user_wallet
+from Common.utils.wallet_operation import debit_credit_user_wallet
 
 
 class SetPin(APIView):

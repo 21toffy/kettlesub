@@ -18,3 +18,10 @@ def send_otp_email(user, otp_code):
     recipient_list = [user.email]
 
     send_mail(subject, message, from_email, recipient_list)
+
+
+def send_reset_email(email, reset_link):
+    subject = 'Password Reset'
+    message = f'Click the following link to reset your password: {reset_link}'
+    sender_email = '#'
+    send_mail(subject, message, sender_email, [email], fail_silently=False)

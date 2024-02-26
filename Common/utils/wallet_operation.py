@@ -1,7 +1,7 @@
 import uuid
-from _decimal import Decimal
+from decimal import Decimal
 from datetime import datetime
-from Wallet.models import WalletModel
+from Wallet.models.wallet import WalletModel
 from Transactions.models import TransactionModel
 from celery.loaders import app
 from django.db import transaction

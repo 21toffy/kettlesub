@@ -1,6 +1,6 @@
 from abc import ABC
 from rest_framework import serializers
-from Wallet.models import WalletModel
+from Wallet.models.wallet import WalletModel
 from Auth.models.user import User
 
 
@@ -16,7 +16,7 @@ class WalletModelSerializer(serializers.ModelSerializer):
         fields = ['id', 'user', 'balance', 'currency', 'wallet_type']
 
 
-class PinSerializer(serializers.Serializer, ABC):
+class PinSerializer(serializers.Serializer):
     pin = serializers.CharField(max_length=4, validators=[PinValidator()])
 
     def validate_pin(self, value):
