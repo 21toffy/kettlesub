@@ -101,10 +101,24 @@ WSGI_APPLICATION = 'KettleSub.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+#DATABASES = {
+ #   'default': {
+  #      'ENGINE': 'django.db.backends.sqlite3',
+   #     'NAME': BASE_DIR / 'db.sqlite3',
+    #}
+#}
+
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'defaultdb',
+        'USER': 'avnadmin',
+        'PASSWORD': 'AVNS_UU0vc4hk54l1iMcYCrH',
+        'HOST': 'kettlesub-oketofoke-47ec.a.aivencloud.com',
+        'PORT': '10949',
+        'OPTIONS': {
+            'ssl': {'sslmode': 'REQUIRED'},
+        },
     }
 }
 

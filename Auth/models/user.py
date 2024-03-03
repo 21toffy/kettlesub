@@ -30,39 +30,23 @@ class MyUserManager(BaseUserManager):
         return user
 
 
-class User(BaseModel, AbstractBaseUser):
-    email = models.EmailField(
-        verbose_name="email address",
-        max_length=255,
-        unique=True,
-    )
-    phone = models.CharField(
-        unique=True, help_text="Phone number", max_length=25, null=True
-    )
-    password = models.CharField(max_length=255, null=True)
-    first_name = models.CharField(max_length=255, null=True)
-    middle_name = models.CharField(max_length=255, null=True)
-    last_name = models.CharField(max_length=255, null=True)
-    pin = models.CharField(max_length=4, null=True, blank=True)
-    username = models.CharField(max_length=255, null=True)
-    referal_code = models.CharField(max_length=255, null=True)
-    is_admin = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
-    ussd_pin = models.CharField(
-        max_length=50, null=True, blank=True)
-    is_flagged = models.BooleanField(default=False)
-    is_frozen = models.BooleanField(default=False)
-    objects = MyUserManager()
 
-    USERNAME_FIELD = "email"
 
-    class Meta:
-        db_table = "users"
-        managed = True
-        verbose_name = "User"
-        verbose_name_plural = "User"
-
-    def get_name(self):
-        full_name = " ".join(
-            filter(None, [self.first_name, self.middle_name, self.last_name]))
-        return full_name
+class User(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    name = models.CharField(max_length=255)
+    email = models.CharField(max_length=255)
+    username = models.CharField(max_length=255)
+    last_login = models.DateTimeField(null=True, blank=True)
+    mobile = models.CharField(max_length=255)
+    create_pin = models.CharField(max_length=255)
+    email_verified_at = models.DateTimeField(null=True, blank=True)
+    password = models.CharField(max_length=255)
+    package = models.CharField(max_length=255)
+    refered_by = models.CharField(max_length=255, null=True, blank=True)
+    remember_token = models.CharField(max_length=100, null=True, blank=True)
+    hearFrom = models.CharField(max_length=255, null=True, blank=True)
+    role = models.CharField(max_length=255, null=True, blank=True)
+    status = models.CharField(max_length=255, null=True, blank=True)
+    created_at = models.DateTimeField(null=True, blank=True)
+    updated_at = models.DateTimeField(null=True, blank=True)

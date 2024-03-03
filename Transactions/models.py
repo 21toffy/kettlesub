@@ -1,6 +1,6 @@
 from Auth.models import User
 from django.db import models
-from Wallet.models.wallet import WalletModel
+from Wallet.models.wallet import Wallet
 from Common.models import BaseModel
 
 
@@ -50,7 +50,7 @@ class TransactionModel(BaseModel):
     )
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True)
     wallet = models.ForeignKey(
-        WalletModel, on_delete=models.SET_NULL, null=True)
+        Wallet, on_delete=models.SET_NULL, null=True)
     transaction_type = models.CharField(choices=TRANSACTION_TYPE, max_length=10)
     reference = models.CharField(max_length=100)
     ext_reference = models.CharField(max_length=100, null=True)
