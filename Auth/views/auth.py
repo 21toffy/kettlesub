@@ -13,9 +13,8 @@ from rest_framework_simplejwt.views import (
     TokenBlacklistView
 )
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
-from django.utils.encoding import smart_str, force_str, DjangoUnicodeDecodeError
+from django.utils.encoding import smart_str, force_str
 from rest_framework import status
-
 from rest_framework.views import APIView
 from Common.custom_response import custom_response
 from Auth.serializers.auth import *
