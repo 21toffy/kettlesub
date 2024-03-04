@@ -1,6 +1,6 @@
 from abc import ABC
 from rest_framework import serializers
-from Wallet.models.wallet import WalletModel
+from Wallet.models.wallet import Wallet
 from Auth.models.user import User
 
 
@@ -12,7 +12,7 @@ class PinValidator:
 
 class WalletModelSerializer(serializers.ModelSerializer):
     class Meta:
-        model = WalletModel
+        model = Wallet
         fields = ['id', 'user', 'balance', 'currency', 'wallet_type']
 
 

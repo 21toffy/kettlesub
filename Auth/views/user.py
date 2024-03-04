@@ -1,9 +1,8 @@
-from Common.custom_response import custom_response
+from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from Auth.utils.user import *
 from django.db import IntegrityError
-from Auth.serializers import RegisterSerializer, OTPVerificationSerializer, OTPSerializer
+from Auth.serializers import UserRegistrationSerializer
 from Auth.models import User
 
 
@@ -24,75 +23,33 @@ class RegistrationView(APIView):
             Response: JSON response indicating the status of the user creation process.
 
     """
-    serializer_class = RegisterSerializer
-
-    def post(self, request):
-        print("RegistrationView - POST method called")
-        serializer = self.serializer_class(data=request)
-        serializer.is_valid(raise_exception=True)
-
-        validated_data = serializer.validated_data
-        password = validated_data.pop('password', None)
-        try:
-            user = User.objects.create_user(email=validated_data['email'],
-                                     password=password)
-            otp_serializer = OTPSerializer(data={'email': validated_data['email']})
-            otp_serializer.is_valid(raise_exception=True)
-
-            otp_code = generate_otp(user)
-            send_otp_email(user, otp_code)
-
-            print(f"Generated OTP for user {user.email}: {otp_code}")
-
-            return custom_response({"message": "User created successfully"},
-                                   status.HTTP_201_CREATED, "success")
-        except IntegrityError:
-            return custom_response({"message": "An error occurred during user creation"},
-                                   status.HTTP_500_INTERNAL_SERVER_ERROR, 'failed')
-
-
-class VerificationView(APIView):
-    """
-    API endpoint for OTP verification during user registration.
-
-        - Receives user email and OTP code.
-
-        - Verifies the OTP code.
-
-    Handles POST requests for OTP verification.
-
-        Args:
-            :Request: The HTTP request object.
-
-        Returns:
-            Response: JSON response indicating the status of the OTP verification process.
-
-    """
-    serializer_class = OTPVerificationSerializer
+    serializer_class = UserRegistrationSerializer
 
     def post(self, request):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         validated_data = serializer.validated_data
+        password = validated_data.pop('password', None)
 
-        is_valid_otp = self.verify_otp(validated_data['email'], validated_data['otp_code'])
-
-        if is_valid_otp:
-            user = User.objects.get(email=validated_data['email'])
-            user.is_active = True
-            user.save()
-            return custom_response({"message": "OTP verification successful"},
-                                   status.HTTP_200_OK, 'success')
-        else:
-            return custom_response({"message": "Invalid OTP code"},
-                                   status.HTTP_400_BAD_REQUEST, 'failed')
-
-    @staticmethod
-    def verify_otp(email, otp_code):
         try:
-            user = User.objects.get(email=email)
-            stored_otp = generate_otp(user)
-            return otp_code == stored_otp
-        except User.DoesNotExist:
-            return False
+            user = User.objects.create_user(
+                email=validated_data['email'],
+                password=password,
+                name=validated_data['name'],
+                username=validated_data['username'],
+                mobile=validated_data['mobile'],
+                create_pin=validated_data['create_pin'],
+                package=validated_data['package'],
+                refered_by=validated_data.get('refered_by'),
+                hearFrom=validated_data.get('hearFrom'),
+                role=validated_data.get('role'),
+                status=validated_data.get('status'),
+            )
+
+            return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
+        except IntegrityError:
+            return Response({"message": "An error occurred during user creation"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+

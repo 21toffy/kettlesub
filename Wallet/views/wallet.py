@@ -41,9 +41,9 @@ class GetWalletBalanceView(APIView):
     def get(self, request, *args, **kwargs):
         user = request.user
         try:
-            main_wallet = WalletModel.objects.get(user=user, wallet_type='MAIN')
-            bonus_wallet = WalletModel.objects.get(user=user, wallet_type='BONUS')
-        except WalletModel.DoesNotExist:
+            main_wallet = Wallet.objects.get(user=user, wallet_type='MAIN')
+            bonus_wallet = Wallet.objects.get(user=user, wallet_type='BONUS')
+        except Wallet.DoesNotExist:
             return custom_response(data=None, message='Wallet not found for the user',
                                    status_code=status.HTTP_404_NOT_FOUND, status_body="error")
 
@@ -67,13 +67,13 @@ class WalletTransferView(APIView):
 
             try:
                 with transaction.atomic():
-                    sender_wallet = WalletModel.objects.gets(
+                    sender_wallet = Wallet.objects.gets(
                         id=wallet_transfer_data['sender_wallet_id'],
                         user__username=wallet_transfer_data['sender_username'],
                         wallet_type=wallet_transfer_data['wallet_type']
                     )
 
-                    receiver_wallet = WalletModel.objects.get(
+                    receiver_wallet = Wallet.objects.get(
                         id=wallet_transfer_data['receiver_wallet_id'],
                         user__username=wallet_transfer_data['receiver_username'],
                         wallet_type=wallet_transfer_data['wallet_type']

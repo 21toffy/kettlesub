@@ -1,4 +1,6 @@
 from django.contrib.auth import authenticate
+from django.core.exceptions import ValidationError
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import (
     TokenObtainPairSerializer,
@@ -13,6 +15,7 @@ from rest_framework_simplejwt.views import (
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import smart_str, force_str, DjangoUnicodeDecodeError
 from rest_framework import status
+
 from rest_framework.views import APIView
 from Common.custom_response import custom_response
 from Auth.serializers.auth import *
@@ -38,7 +41,7 @@ class LoginView(TokenObtainPairView):
 
     def post(self, request, **kwargs):
         print("LoginView - POST method called")
-        serializer = LoginSerializer(data=request.data)
+        serializer = UserAuthenticationSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         validated_data = serializer.validated_data
         email = validated_data["email"]
@@ -182,31 +185,25 @@ class ResetPasswordView(APIView):
     """
     serializer_class = ResetPasswordSerializer
 
-    def post(self, request, *args, **kwargs):
+    def post(self, request, uidb64, token, *args, **kwargs):
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        uidb64 = kwargs.get('uidb64')
-        token = kwargs.get('token')
 
         user = self._get_user(uidb64)
         if user and PasswordResetTokenGenerator().check_token(user, token):
             try:
-                # Set the new password
-                user.set_password(serializer.validated_data['password'])
+                user.set_password(serializer.validated_data['new_password'])
                 user.save()
-                return custom_response({'message': 'Password reset successful.'}, status.HTTP_200_OK,
-                                       status_text="success")
-            except Exception as e:
-                return custom_response({'message': 'Error resetting password.', 'error': str(e)},
-                                       status.HTTP_500_INTERNAL_SERVER_ERROR, status_text="failed")
+                return custom_response({'message': 'Password reset successful.'}, status.HTTP_200_OK, "success")
+            except ValidationError as e:
+                return custom_response({'message': 'Error resetting password.', 'error': str(e)}, status.HTTP_500_INTERNAL_SERVER_ERROR, "failed")
         else:
-            return custom_response({'message': 'Invalid reset link.'}, status.HTTP_400_BAD_REQUEST, status_text="failed")
+            return custom_response({'message': 'Invalid reset link.'}, status.HTTP_400_BAD_REQUEST, "failed")
 
     def _get_user(self, uidb64):
         try:
             user_id = force_str(urlsafe_base64_decode(uidb64))
             return User.objects.get(id=user_id)
-        except (TypeError, ValueError, OverflowError, User.DoesNotExist, DjangoUnicodeDecodeError):
+        except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             return None
 

@@ -1,7 +1,7 @@
 import uuid
 from decimal import Decimal
 from datetime import datetime
-from Wallet.models.wallet import WalletModel
+from Wallet.models.wallet import Wallet
 from Transactions.models import TransactionModel
 from celery.loaders import app
 from django.db import transaction
@@ -38,17 +38,17 @@ def debit_credit_user_wallet(
             if description is None:
                 description = "Wallet " + action
 
-            wallet_object = WalletModel.objects.filter(id=wallet_id).select_for_update().first()
+            wallet_object = Wallet.objects.filter(id=wallet_id).select_for_update().first()
 
-            amount_before = WalletModel.objects.filter(id=wallet_id).values('balance').first()['balance']
+            amount_before = Wallet.objects.filter(id=wallet_id).values('balance').first()['balance']
             if action == "debit":
-                WalletModel.objects.filter(id=wallet_object.id).update(balance=F("balance") - amount)
+                Wallet.objects.filter(id=wallet_object.id).update(balance=F("balance") - amount)
                 txRefDebit = "Dr" + txRefDebit[-8:]
-                amount_after = WalletModel.objects.get(id=wallet_object.id).balance
+                amount_after = Wallet.objects.get(id=wallet_object.id).balance
             else:
-                WalletModel.objects.filter(id=wallet_object.id).update(balance=F("balance") + amount)
+                Wallet.objects.filter(id=wallet_object.id).update(balance=F("balance") + amount)
                 txRefDebit = "Cr" + txRefDebit[-8:]
-                amount_after = WalletModel.objects.get(user_id=user.id, id=wallet_object.id).balance
+                amount_after = Wallet.objects.get(user_id=user.id, id=wallet_object.id).balance
 
             data = {
                 "reference": txRefDebit,

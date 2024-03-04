@@ -1,30 +1,27 @@
+# users/admin.py
 from django.contrib import admin
-from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
+from django.contrib.auth.admin import UserAdmin
 from .models import User
 
-
-class UserAdmin(BaseUserAdmin):
-    list_display = ('email', 'phone', 'get_name', 'is_admin', 'is_active')
-    list_filter = ('is_admin', 'is_active')
-    search_fields = ('email', 'phone', 'first_name', 'last_name')
-
-    fieldsets = (
-        (None, {'fields': ('email', 'password')}),
-        ('Personal Info', {'fields': ('phone', 'first_name', 'middle_name', 'last_name', 'pin', 'username', 'referal_code', 'ussd_pin')}),
-        ('Permissions', {'fields': ('is_admin', 'is_active', 'is_flagged', 'is_frozen')}),
-        ('Dates', {'fields': ('created_at', 'updated_at')}),
-    )
-
-    add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('email', 'password1', 'password2'),
-        }),
-    )
-
-    search_fields = ('email',)
+class CustomUserAdmin(UserAdmin):
+    model = User
+    list_display = ('email', 'username', 'mobile', 'is_staff_custom', 'is_superuser_custom')
+    search_fields = ('email', 'username', 'mobile')
     ordering = ('email',)
-    filter_horizontal = ()
+
+    def is_staff_custom(self, obj):
+        return obj.is_staff
+
+    def is_superuser_custom(self, obj):
+        return obj.is_superuser
+
+    is_staff_custom.boolean = True
+    is_staff_custom.short_description = 'Is Staff'
+
+    is_superuser_custom.boolean = True
+    is_superuser_custom.short_description = 'Is Superuser'
+
+    list_filter = ('is_superuser', 'status')
 
 
-admin.site.register(User, UserAdmin)
+admin.site.register(User, CustomUserAdmin)

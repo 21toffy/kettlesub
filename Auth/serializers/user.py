@@ -1,61 +1,28 @@
 from rest_framework import serializers
 from Auth.models.user import User
-from Auth.validators.user import validate_email_format, validate_phone_number
 
 
-class RegisterSerializer(serializers.ModelSerializer):
+class UserRegistrationSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
     class Meta:
         model = User
-        fields = ['id', 'email', 'phone', 'first_name', 'middle_name', 'last_name', 'username', 'referal_code', 'is_admin', 'is_active', 'ussd_pin', 'is_flagged', 'is_frozen']
-        extra_kwargs = {
-            'password': {'write_only': True, 'min_length': 8},
-        }
+        fields = ('id', 'email', 'password', 'name', 'username', 'mobile', 'create_pin', 'package', 'refered_by', 'hearFrom', 'role', 'status', 'created_at', 'updated_at')
+        extra_kwargs = {'password': {'write_only': True}}
 
-    def validate_email(self, value):
-        validate_email_format(value)
-        existing_email = User.objects.filter(email=value)
-        if existing_email.exists():
-            raise serializers.ValidationError("Email already registered")
-        return value
-
-    def validate(self, data):
-        first_name = data.get('first_name')
-        last_name = data.get('last_name')
-
-        if not first_name or not last_name:
-            raise serializers.ValidationError("First name and Last name are required")
-
-        return data
-
-    def validate_phone(self, value):
-        validate_phone_number(value)
-        return value
-
-
-class OTPSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-
-    def validate_email(self, value):
-        try:
-            user = User.objects.get(email=value)
-            return user
-        except User.DoesNotExist:
-            raise serializers.ValidationError("User with this email does not exist.")
-
-
-class OTPVerificationSerializer(serializers.Serializer):
-    email = serializers.EmailField()
-    otp_code = serializers.CharField()
-
-    def validate_email(self, value):
-        try:
-            user = User.objects.get(email=value)
-            return user
-        except User.DoesNotExist:
-            raise serializers.ValidationError("User with this email does not exist.")
-
-    def validate_otp_code(self, value):
-        if not value.isdigit():
-            raise serializers.ValidationError("OTP code must be a numeric value.")
-        return value
-
+    def create(self, validated_data):
+        user = User.objects.create(
+            email=validated_data['email'],
+            name=validated_data['name'],
+            username=validated_data['username'],
+            mobile=validated_data['mobile'],
+            create_pin=validated_data['create_pin'],
+            package=validated_data['package'],
+            refered_by=validated_data.get('refered_by', None),
+            hearFrom=validated_data.get('hearFrom', None),
+            role=validated_data.get('role', None),
+            status=validated_data.get('status', None),
+        )
+        user.set_password(validated_data['password'])
+        user.save()
+        return user
