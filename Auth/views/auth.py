@@ -48,9 +48,9 @@ class LoginView(TokenObtainPairView):
         password = validated_data["password"]
         user = authenticate(request, email=email, password=password)
 
-        if user:
+        if user is not None:
             tokens = super().post(request)
-            data = {"email": user.email, "fullname": user.fullname}
+            data = {"email": user.email, "fullname": user.name}
 
             print("Login successful")
 
