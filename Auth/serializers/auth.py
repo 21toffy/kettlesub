@@ -14,7 +14,7 @@ class UserAuthenticationSerializer(serializers.Serializer):
             user = User.objects.filter(email=email).first()
 
             if user and user.check_password(password):
-                return user
+                return data
             else:
                 raise serializers.ValidationError("Invalid email or password.")
         else:

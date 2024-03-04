@@ -1,4 +1,5 @@
-from django.contrib.auth import authenticate
+from rest_framework import status
+from rest_framework.response import Response
 from django.core.exceptions import ValidationError
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from rest_framework_simplejwt.exceptions import TokenError
@@ -12,6 +13,7 @@ from rest_framework_simplejwt.views import (
     TokenRefreshView,
     TokenBlacklistView
 )
+from django.contrib.auth import authenticate
 from django.contrib.auth.tokens import PasswordResetTokenGenerator
 from django.utils.encoding import smart_str, force_str
 from rest_framework import status
@@ -19,6 +21,7 @@ from rest_framework.views import APIView
 from Common.custom_response import custom_response
 from Auth.serializers.auth import *
 from Auth.utils.user import send_reset_email
+import traceback
 
 
 class LoginView(TokenObtainPairView):
@@ -39,35 +42,48 @@ class LoginView(TokenObtainPairView):
     serializer_class = TokenObtainPairSerializer
 
     def post(self, request, **kwargs):
-        print("LoginView - POST method called")
-        serializer = UserAuthenticationSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        validated_data = serializer.validated_data
-        email = validated_data["email"]
-        password = validated_data["password"]
-        user = authenticate(request, email=email, password=password)
+        try:
+            print("Request data:", request.data)
+            serializer = UserAuthenticationSerializer(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            validated_data = serializer.validated_data
 
-        if user is not None:
-            tokens = super().post(request)
-            data = {"email": user.email, "fullname": user.name}
+            print("validated_data:", validated_data)
 
-            print("Login successful")
+            email = validated_data["email"]
+            password = validated_data["password"]
 
-            return custom_response(
-                data=data,
-                message="Logged in successfully",
-                status_code=status.HTTP_200_OK,
-                status_text="success",
-                tokens=tokens.data
-            )
-        else:
-            print("Invalid credentials")
-            return custom_response(
-                data="Invalid credentials",
-                message="Invalid credentials",
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                status_text="error"
-            )
+            user = authenticate(request, username=email, password=password)
+
+            if user is not None:
+                tokens = super().post(request)
+                data = {"email": user.email, "fullname": user.name}
+
+                print("Login successful")
+
+                return Response({
+                    "data": data,
+                    "message": "Logged in successfully",
+                    "status_code": status.HTTP_200_OK,
+                    "status_text": "success",
+                    "tokens": tokens.data
+                })
+            else:
+                print("Invalid credentials")
+                return Response({
+                    "data": "Invalid credentials",
+                    "message": "Invalid credentials",
+                    "status_code": status.HTTP_401_UNAUTHORIZED,
+                    "status_text": "error"
+                })
+        except Exception as e:
+            traceback.print_exc()
+            return Response({
+                "data": "Internal Server Error",
+                "message": "An internal server error occurred",
+                "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
+                "status_text": "error"
+            })
 
 
 class RefreshTokenView(TokenRefreshView):
@@ -89,16 +105,14 @@ class RefreshTokenView(TokenRefreshView):
 
     def post(self, request, **kwargs):
         serializer = self.serializer_class(data=request.data)
-        try:
-            serializer.is_valid(raise_exception=True)
-            validated_data = serializer.validated_data
-            access_token = validated_data.get('access')
-            return custom_response({
-                "message": "Refreshed successfully",
-                "token": access_token
-            }, status.HTTP_200_OK, "success")
-        except TokenError:
-            return custom_response("Invalid or expired refresh token.", status.HTTP_401_UNAUTHORIZED, "failed")
+        serializer.is_valid(raise_exception=True)
+        validated_data = serializer.validated_data
+        access_token = validated_data.get('access')
+        return Response({
+            "message": "Refreshed successfully",
+            "token": access_token,
+            "status": "success"
+        }, status=status.HTTP_200_OK)
 
 
 class Logout(TokenBlacklistView):
@@ -123,9 +137,10 @@ class Logout(TokenBlacklistView):
         serializer = self.serializer_class(data=request.data)
         try:
             serializer.is_valid(raise_exception=True)
-            return custom_response("Logged out successfully.", status.HTTP_200_OK, "success")
+            return Response("Logged out successfully", status.HTTP_200_OK)
+
         except TokenError:
-            return custom_response("Token is blacklisted.", status.HTTP_401_UNAUTHORIZED, "failed")
+            return Response("Token is blacklisted.", status.HTTP_401_UNAUTHORIZED)
 
 
 class ForgotPasswordView(APIView):
@@ -155,13 +170,14 @@ class ForgotPasswordView(APIView):
 
                 print(f"Reset link generated: {reset_link}")
 
-                send_reset_email(email, reset_link)
+                send_reset_email(email, reset_link.encode('utf-8'))
 
-                return custom_response({'message': 'Password reset email sent successfully.'}, status.HTTP_200_OK, "success")
+                return Response({'message': 'Password reset email sent successfully.'}, status.HTTP_200_OK)
             except Exception as e:
-                return custom_response({'message': 'Error sending reset email.', 'error': str(e)},status.HTTP_500_INTERNAL_SERVER_ERROR, "failed")
+                return Response({'message': 'Error sending reset email.', 'error': str(e)},
+                                status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
-            return custom_response({'message': 'No user found with the provided email.'}, status.HTTP_404_NOT_FOUND, "failed")
+            return Response({'message': 'No user found with the provided email.'}, status.HTTP_404_NOT_FOUND)
 
     def _get_reset_link(self, request, user, reset_token):
         uidb64 = urlsafe_base64_encode(smart_str(user.id))
@@ -169,6 +185,7 @@ class ForgotPasswordView(APIView):
             f'/reset-password/{uidb64}/{reset_token}/'
         )
         return reset_link
+
 
 class ResetPasswordView(APIView):
     """
@@ -193,11 +210,12 @@ class ResetPasswordView(APIView):
             try:
                 user.set_password(serializer.validated_data['new_password'])
                 user.save()
-                return custom_response({'message': 'Password reset successful.'}, status.HTTP_200_OK, "success")
+                return Response({'message': 'Password reset successful.'}, status.HTTP_200_OK)
             except ValidationError as e:
-                return custom_response({'message': 'Error resetting password.', 'error': str(e)}, status.HTTP_500_INTERNAL_SERVER_ERROR, "failed")
+                return Response({'message': 'Error resetting password.', 'error': str(e)},
+                                status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
-            return custom_response({'message': 'Invalid reset link.'}, status.HTTP_400_BAD_REQUEST, "failed")
+            return Response({'message': 'Invalid reset link.'}, status.HTTP_400_BAD_REQUEST)
 
     def _get_user(self, uidb64):
         try:
@@ -205,4 +223,3 @@ class ResetPasswordView(APIView):
             return User.objects.get(id=user_id)
         except (TypeError, ValueError, OverflowError, User.DoesNotExist):
             return None
-
