@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
-from decouple import config
+#from decouple import config
 from django.contrib import staticfiles
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -176,9 +176,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #EMAIL_HOST_PASSWORD = 'your_gmail_password'
 
 
-BAXI_BASE_URL = config("BAXI_BASE_URL_TEST")
-BAXI_BASE_URL_2 = config("BAXI_BASE_URL_2")
-BAXI_AGENT_ID = config("BAXI_AGENT_ID")
-BAXI_BAP_ACCESS_KEY = config("BAXI_BAP_ACCESS_KEY")
-BAXI_KEY = config("BAXI_KEY")
-BAXI_MOCK = config("BAXI_MOCK")
+#BAXI_BASE_URL = config("BAXI_BASE_URL_TEST")
+#BAXI_BASE_URL_2 = config("BAXI_BASE_URL_2")
+#BAXI_AGENT_ID = config("BAXI_AGENT_ID")
+#BAXI_BAP_ACCESS_KEY = config("BAXI_BAP_ACCESS_KEY")
+#BAXI_KEY = config("BAXI_KEY")
+#BAXI_MOCK = config("BAXI_MOCK")
