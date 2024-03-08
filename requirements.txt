@@ -37,3 +37,4 @@ amqp==5.2.0
 helpers~=0.2.0
 mysqlclient
 mysqlclient==2.2.4
+gunicorn==21.2.0
