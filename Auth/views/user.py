@@ -30,10 +30,6 @@ class RegistrationView(APIView):
         serializer.is_valid(raise_exception=True)
 
         validated_data = serializer.validated_data
-        print(f"Validated Data: {validated_data}")
-        serializer.is_valid(raise_exception=True)
-
-        validated_data = serializer.validated_data
         password = validated_data.pop('password', None)
 
         try:
@@ -52,7 +48,8 @@ class RegistrationView(APIView):
             )
 
             return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
-        except IntegrityError:
+        except IntegrityError as e:
+            print(f"IntegrityError: {e}")
             return Response({"message": "An error occurred during user creation"},
                             status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
