@@ -1,0 +1,6 @@
+services:
+  - name: kettlesub
+    type: web
+    env: python3
+    buildCommand: ./build.sh
+    startCommand: gunicorn KettleSub.wsgi:application
