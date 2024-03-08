@@ -29,7 +29,7 @@ SECRET_KEY = 'django-insecure-8*f=n!qzjorn-5last)0!sl-g@1cbw@07kyxe8%^shqm5^=+kb
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['kettlesub.onrender.com', 'localhost']
 
 
 # Application definition
