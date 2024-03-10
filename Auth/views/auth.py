@@ -45,10 +45,9 @@ class LoginView(TokenObtainPairView):
         try:
             serializer = UserAuthenticationSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
-            validated_data = serializer.validated_data
 
-            email = validated_data["email"]
-            password = validated_data["password"]
+            email = request.data.get("email")
+            password = request.data.get("password")
 
             user = authenticate(request, username=email, password=password)
 
