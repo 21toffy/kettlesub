@@ -52,6 +52,7 @@ class RegistrationView(APIView):
             return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
 
         except Exception as e:
-            data = {"error_message": f"An error occurred while creating cart: {str(e)}"}
-            return Response(data, "Internal server error", status.HTTP_500_INTERNAL_SERVER_ERROR, "error")
+            data = {"error_message": f"An error occurred while creating user: {str(e)}"}
+            return Response(data, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
