@@ -4,7 +4,7 @@ from Auth.models.user import User
 
 class UserAuthenticationSerializer(serializers.Serializer):
     email = serializers.EmailField()
-    password = serializers.CharField(style={'input_type': 'password'})
+    password = serializers.CharField()
 
     def validate(self, data):
         email = data.get('email')
