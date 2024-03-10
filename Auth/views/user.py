@@ -1,7 +1,6 @@
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework import status
-from django.db import IntegrityError
 from Auth.serializers import UserRegistrationSerializer
 from Auth.models import User
 import logging
@@ -51,13 +50,8 @@ class RegistrationView(APIView):
             )
 
             return Response({"message": "User created successfully"}, status=status.HTTP_201_CREATED)
-        except IntegrityError as e:
-            logger.error(f"IntegrityError during user creation: {e}", exc_info=True)
-            return Response({"message": "An error occurred during user creation"},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        except Exception as e:
-            logger.error(f"Unexpected error during user creation: {e}", exc_info=True)
-            return Response({"message": "An unexpected error occurred during user creation"},
-                            status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+        except Exception as e:
+            data = {"error_message": f"An error occurred while creating cart: {str(e)}"}
+            return Response(data, "Internal server error", status.HTTP_500_INTERNAL_SERVER_ERROR, "error")
 
