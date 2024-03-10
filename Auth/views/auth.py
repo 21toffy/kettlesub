@@ -72,6 +72,7 @@ class LoginView(TokenObtainPairView):
         except Exception as e:
             error_message = f"An error occurred while logging in: {str(e)}"
             return Response({
+                "data": None,
                 "message": error_message,
                 "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
                 "status_text": "error"
