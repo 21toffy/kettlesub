@@ -43,12 +43,9 @@ class LoginView(TokenObtainPairView):
 
     def post(self, request, **kwargs):
         try:
-            print("Request data:", request.data)
             serializer = UserAuthenticationSerializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             validated_data = serializer.validated_data
-
-            print("validated_data:", validated_data)
 
             email = validated_data["email"]
             password = validated_data["password"]
@@ -59,8 +56,6 @@ class LoginView(TokenObtainPairView):
                 tokens = super().post(request)
                 data = {"email": user.email, "fullname": user.name}
 
-                print("Login successful")
-
                 return Response({
                     "data": data,
                     "message": "Logged in successfully",
@@ -69,18 +64,17 @@ class LoginView(TokenObtainPairView):
                     "tokens": tokens.data
                 })
             else:
-                print("Invalid credentials")
                 return Response({
-                    "data": "Invalid credentials",
+                    "data": None,
                     "message": "Invalid credentials",
                     "status_code": status.HTTP_401_UNAUTHORIZED,
                     "status_text": "error"
                 })
         except Exception as e:
-            traceback.print_exc()
+            error_message = f"An error occurred while logging in: {str(e)}"
             return Response({
-                "data": "Internal Server Error",
-                "message": "An internal server error occurred",
+                "data": None,
+                "message": error_message,
                 "status_code": status.HTTP_500_INTERNAL_SERVER_ERROR,
                 "status_text": "error"
             })
